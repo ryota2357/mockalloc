@@ -427,11 +427,42 @@ pub fn assert_allocs(f: impl FnOnce()) {
         f();
     } else {
         let info = record_allocs(f);
-        #[cfg(feature = "tracing")]
-        if info.result.is_err() {
-            eprintln!("# Mockalloc trace:\n\n{:#?}", info.tracing);
+        let AllocInfo {
+            num_allocs,
+            num_frees,
+            mem_allocated,
+            mem_freed,
+            peak_mem,
+            peak_mem_allocs,
+            result,
+            #[cfg(feature = "tracing")]
+            tracing,
+        } = info;
+
+        if let Err(err) = result {
+            let infos = [
+                format!("  total number of alloc performed: {}", num_allocs),
+                format!("  total number of frees performed: {}", num_frees),
+                format!("  total amount of memory allocated: {}", mem_allocated),
+                format!("  total amount of memory freed: {}", mem_freed),
+                format!(
+                    "  peak memory usage: {} (active allocations: {})",
+                    peak_mem, peak_mem_allocs
+                ),
+            ]
+            .join("\n");
+            #[cfg(feature = "tracing")]
+            {
+                panic!(
+                    "AllocError: {:?}\n{}\n# Mockalloc trace:\n\n{:#?}",
+                    err, infos, tracing
+                );
+            }
+            #[cfg(not(feature = "tracing"))]
+            {
+                panic!("AllocError: {:?}\n{}\n", err, infos);
+            }
         }
-        info.result.unwrap();
     }
 }
 
