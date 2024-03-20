@@ -249,7 +249,7 @@ impl LocalState {
 }
 
 thread_local! {
-    static ENABLED: Cell<bool> = Cell::new(false);
+    static ENABLED: Cell<bool> = const { Cell::new(false) };
     static LOCAL_STATE: RefCell<LocalState> = RefCell::new(LocalState::default());
 }
 
@@ -500,6 +500,7 @@ mod tests {
     #[global_allocator]
     static A: Mockalloc<LeakingAllocator> = Mockalloc(LeakingAllocator(System));
 
+    #[allow(clippy::vec_box)]
     fn do_some_allocations() -> Vec<Box<i32>> {
         let mut a = Vec::new();
         let mut b = Vec::new();

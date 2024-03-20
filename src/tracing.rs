@@ -231,7 +231,7 @@ impl TracingState {
         let mut visit_caller = move |caller| {
             mut_callers
                 .entry(caller)
-                .or_insert_with(|| mem::replace(&mut self_callers[caller], Default::default()));
+                .or_insert_with(|| mem::take(&mut self_callers[caller]));
         };
         for leak in self.allocations.values() {
             visit_caller(leak.caller);
@@ -250,9 +250,9 @@ impl TracingState {
 
         TracingInfo {
             callers,
-            leaks: mem::replace(&mut self.allocations, Default::default()),
-            errors: mem::replace(&mut self.errors, Default::default()),
-            free_callers: mem::replace(&mut self.free_callers, Default::default()),
+            leaks: mem::take(&mut self.allocations),
+            errors: mem::take(&mut self.errors),
+            free_callers: mem::take(&mut self.free_callers),
         }
     }
     fn trace_caller(&mut self) -> usize {
